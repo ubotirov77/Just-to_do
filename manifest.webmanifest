@@ -2,17 +2,24 @@
   "name": "Mobile To-Do",
   "short_name": "To-Do",
   "description": "A fast, offline-capable mobile to-do list that saves tasks locally on your device.",
-  "id": "/just-t/",
-  "start_url": "/just-t/",
-  "scope": "/just-t/",
+  "start_url": ".",
+  "scope": ".",
   "display": "standalone",
-  "orientation": "portrait",
-  "lang": "en",
   "background_color": "#0b0f1a",
   "theme_color": "#0b0f1a",
+  "orientation": "portrait",
+  "lang": "en",
   "categories": ["productivity"],
   "icons": [
-    { "src": "/just-t/icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
-    { "src": "/just-t/icons/icon-512.png", "sizes": "512x512", "type": "image/png" }
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
   ]
 }
