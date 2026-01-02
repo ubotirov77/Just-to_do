@@ -1,0 +1,16 @@
+{
+  "background_color": "#ffffff",
+  "dir": "ltr",
+  "display": "standalone",
+  "name": "ubotirov77.github",
+  "orientation": "any",
+  "scope": "/",
+  "short_name": "ubotirov77.github",
+  "start_url": "/https://ubotirov77.github.io/Just-to_do/",
+  "theme_color": "#ffffff",
+  "id": "Just to do",
+  "lang": "en",
+  "categories": [
+    "lifestyle"
+  ]
+}
