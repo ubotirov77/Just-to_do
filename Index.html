@@ -1,0 +1,353 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Mobile Todo (LocalStorage)</title>
+  <style>
+    :root{
+      --bg:#0b0f1a;
+      --card:#121a2b;
+      --muted:#7f8aa3;
+      --text:#e9eefc;
+      --danger:#ff4d4d;
+      --ok:#4ade80;
+      --line:rgba(255,255,255,.08);
+      --shadow: 0 18px 50px rgba(0,0,0,.45);
+      --radius: 18px;
+    }
+    *{ box-sizing:border-box; }
+    body{
+      margin:0;
+      min-height:100vh;
+      background: radial-gradient(1200px 700px at 20% -10%, #1b2a55 0%, transparent 55%),
+                  radial-gradient(900px 600px at 100% 0%, #2b1457 0%, transparent 55%),
+                  var(--bg);
+      color:var(--text);
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Inter, Arial, sans-serif;
+      display:flex;
+      justify-content:center;
+      padding:18px 14px 28px;
+    }
+    .wrap{
+      width:100%;
+      max-width:520px;
+    }
+    .card{
+      background: linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.02));
+      border:1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow:hidden;
+    }
+    header{
+      padding:18px 16px 12px;
+      border-bottom:1px solid var(--line);
+    }
+    h1{
+      margin:0;
+      font-size:20px;
+      letter-spacing:.2px;
+    }
+    .sub{
+      margin:6px 0 0;
+      color:var(--muted);
+      font-size:13px;
+      line-height:1.35;
+    }
+
+    form{
+      padding:14px 14px 10px;
+      display:flex;
+      gap:10px;
+    }
+    input{
+      flex:1;
+      padding:14px 14px;
+      border-radius:14px;
+      border:1px solid var(--line);
+      background: rgba(0,0,0,.25);
+      color:var(--text);
+      outline:none;
+      font-size:16px;
+    }
+    input::placeholder{ color: rgba(233,238,252,.45); }
+    button{
+      border:0;
+      border-radius:14px;
+      padding:14px 14px;
+      min-width:56px;
+      font-weight:700;
+      cursor:pointer;
+      color:#081018;
+      background: linear-gradient(135deg, #60a5fa, #a78bfa);
+      touch-action: manipulation;
+    }
+    button:active{ transform: translateY(1px); }
+
+    .meta{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      padding: 2px 16px 14px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+    .meta .clear{
+      background: transparent;
+      color: rgba(233,238,252,.75);
+      border:1px solid var(--line);
+      padding:10px 12px;
+      border-radius: 12px;
+      font-weight:600;
+    }
+    .meta .clear:active{ transform: translateY(1px); }
+
+    ul{
+      list-style:none;
+      margin:0;
+      padding: 0 10px 10px;
+    }
+    li{
+      display:flex;
+      gap:10px;
+      align-items:center;
+      padding:12px 10px;
+      margin: 8px 4px;
+      border:1px solid var(--line);
+      background: rgba(0,0,0,.22);
+      border-radius: 16px;
+    }
+    .check{
+      width:22px; height:22px;
+      border-radius: 7px;
+      border:1px solid var(--line);
+      display:grid;
+      place-items:center;
+      flex: 0 0 auto;
+      cursor:pointer;
+      user-select:none;
+    }
+    .check[data-done="true"]{
+      border-color: rgba(74,222,128,.45);
+      background: rgba(74,222,128,.12);
+    }
+    .check svg{ width:14px; height:14px; opacity:.0; }
+    .check[data-done="true"] svg{ opacity:1; }
+
+    .text{
+      flex:1;
+      min-width:0;
+    }
+    .title{
+      font-size:15px;
+      line-height:1.3;
+      word-break:break-word;
+    }
+    .time{
+      margin-top:4px;
+      font-size:12px;
+      color: var(--muted);
+    }
+    li[data-done="true"] .title{
+      text-decoration: line-through;
+      color: rgba(233,238,252,.55);
+    }
+
+    .del{
+      background: transparent;
+      color: rgba(255,255,255,.8);
+      border:1px solid var(--line);
+      padding:10px 12px;
+      border-radius: 14px;
+      font-weight:700;
+    }
+    .del:hover{ border-color: rgba(255,255,255,.18); }
+    .del:active{ transform: translateY(1px); }
+
+    .empty{
+      padding: 12px 16px 18px;
+      color: rgba(233,238,252,.55);
+      font-size: 14px;
+    }
+
+    /* Bigger tap targets on mobile */
+    @media (min-width: 520px){
+      h1{ font-size:22px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card">
+      <header>
+        <h1>To-Do</h1>
+        <p class="sub">Add tasks, tap to complete, delete when you inevitably change your mind. Saves to your device automatically.</p>
+      </header>
+
+      <form id="todoForm" autocomplete="off">
+        <input id="taskInput" type="text" placeholder="Type a task…" inputmode="text" />
+        <button type="submit" aria-label="Add task">+</button>
+      </form>
+
+      <div class="meta">
+        <div><span id="count">0</span> tasks</div>
+        <button class="clear" id="clearDone" type="button">Clear done</button>
+      </div>
+
+      <ul id="list"></ul>
+      <div class="empty" id="emptyState" hidden>No tasks yet. Start acting like you have goals.</div>
+    </div>
+  </div>
+
+  <script>
+    const STORAGE_KEY = "mobile_todo_v1";
+
+    const form = document.getElementById("todoForm");
+    const input = document.getElementById("taskInput");
+    const list = document.getElementById("list");
+    const countEl = document.getElementById("count");
+    const emptyState = document.getElementById("emptyState");
+    const clearDoneBtn = document.getElementById("clearDone");
+
+    /** @type {{id:string, text:string, done:boolean, createdAt:number}[]} */
+    let todos = load();
+
+    function uid(){
+      // decent-enough unique id without external libs
+      return crypto?.randomUUID ? crypto.randomUUID() : String(Date.now()) + "-" + Math.random().toString(16).slice(2);
+    }
+
+    function save(){
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(todos));
+    }
+
+    function load(){
+      try{
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if(!raw) return [];
+        const parsed = JSON.parse(raw);
+        if(!Array.isArray(parsed)) return [];
+        // basic validation
+        return parsed
+          .filter(t => t && typeof t.id === "string" && typeof t.text === "string")
+          .map(t => ({
+            id: t.id,
+            text: t.text,
+            done: Boolean(t.done),
+            createdAt: typeof t.createdAt === "number" ? t.createdAt : Date.now()
+          }));
+      }catch{
+        return [];
+      }
+    }
+
+    function fmtTime(ts){
+      const d = new Date(ts);
+      // Mobile-friendly short format
+      return d.toLocaleString(undefined, { month:"short", day:"2-digit", hour:"2-digit", minute:"2-digit" });
+    }
+
+    function render(){
+      list.innerHTML = "";
+      countEl.textContent = String(todos.length);
+      emptyState.hidden = todos.length !== 0;
+
+      for(const t of todos){
+        const li = document.createElement("li");
+        li.dataset.id = t.id;
+        li.dataset.done = String(t.done);
+
+        const check = document.createElement("div");
+        check.className = "check";
+        check.dataset.done = String(t.done);
+        check.setAttribute("role","button");
+        check.setAttribute("tabindex","0");
+        check.setAttribute("aria-label", t.done ? "Mark as not done" : "Mark as done");
+        check.innerHTML = `
+          <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M20 6L9 17l-5-5" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        `;
+
+        const textWrap = document.createElement("div");
+        textWrap.className = "text";
+
+        const title = document.createElement("div");
+        title.className = "title";
+        title.textContent = t.text;
+
+        const time = document.createElement("div");
+        time.className = "time";
+        time.textContent = "Added " + fmtTime(t.createdAt);
+
+        textWrap.appendChild(title);
+        textWrap.appendChild(time);
+
+        const del = document.createElement("button");
+        del.className = "del";
+        del.type = "button";
+        del.textContent = "Del";
+        del.setAttribute("aria-label", "Delete task");
+
+        del.addEventListener("click", () => {
+          todos = todos.filter(x => x.id !== t.id);
+          save();
+          render();
+        });
+
+        const toggleDone = () => {
+          const idx = todos.findIndex(x => x.id === t.id);
+          if(idx === -1) return;
+          todos[idx].done = !todos[idx].done;
+          save();
+          render();
+        };
+
+        check.addEventListener("click", toggleDone);
+        check.addEventListener("keydown", (e) => {
+          if(e.key === "Enter" || e.key === " "){
+            e.preventDefault();
+            toggleDone();
+          }
+        });
+
+        li.appendChild(check);
+        li.appendChild(textWrap);
+        li.appendChild(del);
+        list.appendChild(li);
+      }
+    }
+
+    form.addEventListener("submit", (e) => {
+      e.preventDefault();
+      const text = input.value.trim();
+      if(!text) return;
+
+      todos.unshift({
+        id: uid(),
+        text,
+        done: false,
+        createdAt: Date.now()
+      });
+
+      save();
+      render();
+      input.value = "";
+      input.focus();
+    });
+
+    clearDoneBtn.addEventListener("click", () => {
+      const before = todos.length;
+      todos = todos.filter(t => !t.done);
+      if(todos.length !== before){
+        save();
+        render();
+      }
+    });
+
+    // initial paint
+    render();
+  </script>
+</body>
+</html>
