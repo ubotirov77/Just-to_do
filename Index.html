@@ -3,12 +3,8 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="stylesheet" href="/manifest.webmanifest">
   <title>Mobile Todo (LocalStorage)</title>
-
-  <!-- FIXED: relative manifest path -->
-  <link rel="manifest" href="manifest.webmanifest">
-  <meta name="theme-color" content="#0b0f1a">
-
   <style>
     :root{
       --bg:#0b0f1a;
@@ -25,17 +21,19 @@
     body{
       margin:0;
       min-height:100vh;
-      background:
-        radial-gradient(1200px 700px at 20% -10%, #1b2a55 0%, transparent 55%),
-        radial-gradient(900px 600px at 100% 0%, #2b1457 0%, transparent 55%),
-        var(--bg);
+      background: radial-gradient(1200px 700px at 20% -10%, #1b2a55 0%, transparent 55%),
+                  radial-gradient(900px 600px at 100% 0%, #2b1457 0%, transparent 55%),
+                  var(--bg);
       color:var(--text);
       font-family: system-ui, -apple-system, Segoe UI, Roboto, Inter, Arial, sans-serif;
       display:flex;
       justify-content:center;
       padding:18px 14px 28px;
     }
-    .wrap{ width:100%; max-width:520px; }
+    .wrap{
+      width:100%;
+      max-width:520px;
+    }
     .card{
       background: linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.02));
       border:1px solid var(--line);
@@ -47,8 +45,17 @@
       padding:18px 16px 12px;
       border-bottom:1px solid var(--line);
     }
-    h1{ margin:0; font-size:20px; letter-spacing:.2px; }
-    .sub{ margin:6px 0 0; color:var(--muted); font-size:13px; line-height:1.35; }
+    h1{
+      margin:0;
+      font-size:20px;
+      letter-spacing:.2px;
+    }
+    .sub{
+      margin:6px 0 0;
+      color:var(--muted);
+      font-size:13px;
+      line-height:1.35;
+    }
 
     form{
       padding:14px 14px 10px;
@@ -57,7 +64,7 @@
     }
     input{
       flex:1;
-      padding:14px;
+      padding:14px 14px;
       border-radius:14px;
       border:1px solid var(--line);
       background: rgba(0,0,0,.25);
@@ -69,7 +76,7 @@
     button{
       border:0;
       border-radius:14px;
-      padding:14px;
+      padding:14px 14px;
       min-width:56px;
       font-weight:700;
       cursor:pointer;
@@ -97,7 +104,11 @@
     }
     .meta .clear:active{ transform: translateY(1px); }
 
-    ul{ list-style:none; margin:0; padding: 0 10px 10px; }
+    ul{
+      list-style:none;
+      margin:0;
+      padding: 0 10px 10px;
+    }
     li{
       display:flex;
       gap:10px;
@@ -114,6 +125,7 @@
       border:1px solid var(--line);
       display:grid;
       place-items:center;
+      flex: 0 0 auto;
       cursor:pointer;
       user-select:none;
     }
@@ -121,12 +133,23 @@
       border-color: rgba(74,222,128,.45);
       background: rgba(74,222,128,.12);
     }
-    .check svg{ width:14px; height:14px; opacity:0; }
+    .check svg{ width:14px; height:14px; opacity:.0; }
     .check[data-done="true"] svg{ opacity:1; }
 
-    .text{ flex:1; min-width:0; }
-    .title{ font-size:15px; line-height:1.3; word-break:break-word; }
-    .time{ margin-top:4px; font-size:12px; color: var(--muted); }
+    .text{
+      flex:1;
+      min-width:0;
+    }
+    .title{
+      font-size:15px;
+      line-height:1.3;
+      word-break:break-word;
+    }
+    .time{
+      margin-top:4px;
+      font-size:12px;
+      color: var(--muted);
+    }
     li[data-done="true"] .title{
       text-decoration: line-through;
       color: rgba(233,238,252,.55);
@@ -140,6 +163,7 @@
       border-radius: 14px;
       font-weight:700;
     }
+    .del:hover{ border-color: rgba(255,255,255,.18); }
     .del:active{ transform: translateY(1px); }
 
     .empty{
@@ -148,6 +172,7 @@
       font-size: 14px;
     }
 
+    /* Bigger tap targets on mobile */
     @media (min-width: 520px){
       h1{ font-size:22px; }
     }
@@ -158,12 +183,12 @@
     <div class="card">
       <header>
         <h1>To-Do</h1>
-        <p class="sub">Add tasks, tap to complete, delete when you inevitably change your mind.</p>
+        <p class="sub">Add tasks, tap to complete, delete when you inevitably change your mind. Saves to your device automatically.</p>
       </header>
 
       <form id="todoForm" autocomplete="off">
-        <input id="taskInput" type="text" placeholder="Type a task…" />
-        <button type="submit">+</button>
+        <input id="taskInput" type="text" placeholder="Type a task…" inputmode="text" />
+        <button type="submit" aria-label="Add task">+</button>
       </form>
 
       <div class="meta">
@@ -172,7 +197,7 @@
       </div>
 
       <ul id="list"></ul>
-      <div class="empty" id="emptyState" hidden>No tasks yet.</div>
+      <div class="empty" id="emptyState" hidden>No tasks yet. Start acting like you have goals.</div>
     </div>
   </div>
 
@@ -186,12 +211,12 @@
     const emptyState = document.getElementById("emptyState");
     const clearDoneBtn = document.getElementById("clearDone");
 
+    /** @type {{id:string, text:string, done:boolean, createdAt:number}[]} */
     let todos = load();
 
     function uid(){
-      return crypto?.randomUUID
-        ? crypto.randomUUID()
-        : Date.now() + "-" + Math.random().toString(16).slice(2);
+      // decent-enough unique id without external libs
+      return crypto?.randomUUID ? crypto.randomUUID() : String(Date.now()) + "-" + Math.random().toString(16).slice(2);
     }
 
     function save(){
@@ -201,64 +226,128 @@
     function load(){
       try{
         const raw = localStorage.getItem(STORAGE_KEY);
-        return raw ? JSON.parse(raw) : [];
+        if(!raw) return [];
+        const parsed = JSON.parse(raw);
+        if(!Array.isArray(parsed)) return [];
+        // basic validation
+        return parsed
+          .filter(t => t && typeof t.id === "string" && typeof t.text === "string")
+          .map(t => ({
+            id: t.id,
+            text: t.text,
+            done: Boolean(t.done),
+            createdAt: typeof t.createdAt === "number" ? t.createdAt : Date.now()
+          }));
       }catch{
         return [];
       }
     }
 
+    function fmtTime(ts){
+      const d = new Date(ts);
+      // Mobile-friendly short format
+      return d.toLocaleString(undefined, { month:"short", day:"2-digit", hour:"2-digit", minute:"2-digit" });
+    }
+
     function render(){
       list.innerHTML = "";
-      countEl.textContent = todos.length;
+      countEl.textContent = String(todos.length);
       emptyState.hidden = todos.length !== 0;
 
       for(const t of todos){
         const li = document.createElement("li");
-        li.dataset.done = t.done;
+        li.dataset.id = t.id;
+        li.dataset.done = String(t.done);
 
         const check = document.createElement("div");
         check.className = "check";
-        check.dataset.done = t.done;
+        check.dataset.done = String(t.done);
+        check.setAttribute("role","button");
+        check.setAttribute("tabindex","0");
+        check.setAttribute("aria-label", t.done ? "Mark as not done" : "Mark as done");
         check.innerHTML = `
-          <svg viewBox="0 0 24 24" fill="none">
-            <path d="M20 6L9 17l-5-5" stroke="currentColor" stroke-width="2.5"/>
+          <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M20 6L9 17l-5-5" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
           </svg>
         `;
-        check.onclick = () => {
-          t.done = !t.done;
-          save(); render();
-        };
 
-        const text = document.createElement("div");
-        text.className = "text";
-        text.innerHTML = `<div class="title">${t.text}</div>`;
+        const textWrap = document.createElement("div");
+        textWrap.className = "text";
+
+        const title = document.createElement("div");
+        title.className = "title";
+        title.textContent = t.text;
+
+        const time = document.createElement("div");
+        time.className = "time";
+        time.textContent = "Added " + fmtTime(t.createdAt);
+
+        textWrap.appendChild(title);
+        textWrap.appendChild(time);
 
         const del = document.createElement("button");
         del.className = "del";
+        del.type = "button";
         del.textContent = "Del";
-        del.onclick = () => {
-          todos = todos.filter(x => x !== t);
-          save(); render();
+        del.setAttribute("aria-label", "Delete task");
+
+        del.addEventListener("click", () => {
+          todos = todos.filter(x => x.id !== t.id);
+          save();
+          render();
+        });
+
+        const toggleDone = () => {
+          const idx = todos.findIndex(x => x.id === t.id);
+          if(idx === -1) return;
+          todos[idx].done = !todos[idx].done;
+          save();
+          render();
         };
 
-        li.append(check, text, del);
+        check.addEventListener("click", toggleDone);
+        check.addEventListener("keydown", (e) => {
+          if(e.key === "Enter" || e.key === " "){
+            e.preventDefault();
+            toggleDone();
+          }
+        });
+
+        li.appendChild(check);
+        li.appendChild(textWrap);
+        li.appendChild(del);
         list.appendChild(li);
       }
     }
 
-    form.onsubmit = e => {
+    form.addEventListener("submit", (e) => {
       e.preventDefault();
-      if(!input.value.trim()) return;
-      todos.unshift({ id: uid(), text: input.value.trim(), done:false });
-      save(); render();
+      const text = input.value.trim();
+      if(!text) return;
+
+      todos.unshift({
+        id: uid(),
+        text,
+        done: false,
+        createdAt: Date.now()
+      });
+
+      save();
+      render();
       input.value = "";
-    };
+      input.focus();
+    });
 
-    clearDoneBtn.onclick = () => {
+    clearDoneBtn.addEventListener("click", () => {
+      const before = todos.length;
       todos = todos.filter(t => !t.done);
-      save(); render();
-    };
+      if(todos.length !== before){
+        save();
+        render();
+      }
+    });
 
+    // initial paint
     render();
   </script>
 </body>
